@@ -7,7 +7,7 @@ import os
 from time import sleep
 from settings import DOWNLOAD_ROOT
 from typing import Tuple, List
-from locators import TensorLocators, SbisLocators
+from locators import *
 
 
 class Base:
@@ -54,12 +54,12 @@ class SbisPage(Base):
     base_url = "https://sbis.ru/"
     
     def go_to_contact_page(self) -> 'SbisContacts':
-        elem = self.find_element(SbisLocators.sbis_contact)
+        elem = self.find_element(SbisPageLocators.sbis_contact)
         elem.click()
         return SbisContacts(self.br)
         
     def go_to_download_page(self) -> 'SbisDownload':
-        url = self.find_element(SbisLocators.sbis_download).get_attribute("href")
+        url = self.find_element(SbisPageLocators.sbis_download).get_attribute("href")
         self.go_to_url(url)
         return SbisDownload(self.br)
 
@@ -68,22 +68,22 @@ class SbisContacts(Base):
     base_url = "https://sbis.ru/contacts"
     
     def click_tensor_banner(self) -> 'Tensor':
-        elem = self.find_element(TensorLocators.tensor_banner)
+        elem = self.find_element(SbisContactsLocators.sbis_tensor_banner)
         elem.click()
         return Tensor(self.br)
         
     def get_current_region(self) -> tuple[WebElement, str]:
-        elem = self.find_element(SbisLocators.sbis_region)
+        elem = self.find_element(SbisContactsLocators.sbis_region)
         return elem, elem.text
     
     def get_current_partners_names(self) -> tuple[list[WebElement], list[str]]:
-        elem = self.find_elements(SbisLocators.sbis_partners)
+        elem = self.find_elements(SbisContactsLocators.sbis_partners)
         names = [obj.text for obj in elem]
         return elem, names
     
     def change_region(self, region: str, old_elem: WebElement) -> str:
-        self.find_element(SbisLocators.sbis_region).click()
-        new = self.find_element(SbisLocators.sbis_change_region(region))
+        self.find_element(SbisContactsLocators.sbis_region).click()
+        new = self.find_element(SbisContactsLocators.sbis_change_region(region))
         new_region_number = new.text.split()[0]
         new.click()
         self.staleness_of(old_elem)
@@ -96,7 +96,7 @@ class SbisDownload(Base):
     def download_plugin(self) -> str:
         if not os.path.exists(self.download_root):
             os.mkdir(self.download_root)
-        link = self.find_element(SbisLocators.sbis_plugin_download_link).get_attribute("href")
+        link = self.find_element(SbisDownloadLocators.sbis_plugin_download_link).get_attribute("href")
         self.go_to_url(link)
         tmp_files = [file for file in os.listdir(self.download_root) if file.endswith((".tmp", ".crdownload"))]
         while tmp_files:
@@ -132,13 +132,11 @@ class Tensor(Base):
         url = self.find_element(TensorLocators.tensor_strength_block_more).get_attribute("href")
         self.go_to_url(url)
         return TensorAbout(self.br)
-        
 
 
 class TensorAbout(Base):
     base_url = "https://tensor.ru/about"
     
-    def get_work_photos_params(self) -> list[tuple[float, float]]:
-        items = self.find_elements(TensorLocators.tensor_work_photos)
+    def get_work_photos_params(self) -> list[tuple[str | None, str | None]]:
+        items = self.find_elements(TensorAboutLocators.tensor_work_photos)
         return [(obj.get_attribute("width"), obj.get_attribute("height")) for obj in items]
-    
